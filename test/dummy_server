@@ -1,0 +1,33 @@
+#!/bin/env php
+<?php
+
+$args = array(
+    'db' => array_pop($argv)
+);
+while($arg = array_shift($argv)) {
+    if ($arg[0] === '-') {
+        $v = array_shift($argv);
+        if (!$v || $v[0] === '-') {
+            array_unshift($argv, $v);
+            $args[$arg] = true;
+        } else {
+            $args[$arg] = $v;
+        }
+    }
+}
+
+if (empty($args['--port']) || empty($args['--pid-path'])) {
+    die;
+}
+
+$port = intval($args['--port']);
+$pidfile = $args['--pid-path'];
+
+file_put_contents(__FILE__.'.out', json_encode($args));
+file_put_contents($pidfile, getmypid());
+
+$sock = stream_socket_server("tcp://127.0.0.1:{$port}");
+while($con = stream_socket_accept($sock)) {
+    fclose($con);
+}
+
